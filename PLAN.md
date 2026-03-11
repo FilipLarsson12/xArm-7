@@ -22,7 +22,7 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 - **Phase 3** — Complete
 - **Phase 4** — Complete
 - **Phase 5** — Complete
-- Phase 6 — Not started
+- **Phase 6** — Complete
 
 ## Phases
 
@@ -81,10 +81,14 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 **Deliverables:**
 - `XArmDriver.send_twist()`, `stop()`, `shutdown()`
 
-### Phase 6 — Testing + logging
+### Phase 6 — Testing + logging ✅ Complete
 **Done when:**
 - Basic logging of pose/time to CSV works
 - Repeatable run scripts exist
+
+**Deliverables:**
+- `scripts/log_pose_to_csv.py` — pose + timestamp to CSV; background writer thread so the sampling loop never blocks on I/O; timestamps are those returned with each pose (accurate pose–time alignment).
+- `scripts/run_phases.py` — runs phase0 → phase1 → phase4 with the same config.
 
 ## Config
 Use environment variable `XARM_IP` or a YAML config in `config/local.yaml` (ignored by git).
@@ -93,3 +97,5 @@ Use environment variable `XARM_IP` or a YAML config in `config/local.yaml` (igno
 ## How to run (examples)
 - `python scripts/phase0_smoke_test.py --ip $XARM_IP`
 - `python scripts/phase1_prepare.py --ip $XARM_IP`
+- `python scripts/run_phases.py --ip $XARM_IP` — repeatable full test (phase0 → phase1 → phase4)
+- `python scripts/log_pose_to_csv.py --ip $XARM_IP --output pose_log.csv --duration 10` — log pose at 50 Hz to CSV

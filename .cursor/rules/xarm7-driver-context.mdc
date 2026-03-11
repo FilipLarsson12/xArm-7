@@ -23,5 +23,5 @@ This repo is a **driver layer** for xArm7 in Cartesian velocity mode (mode 5). C
 ## Current layout
 
 - `src/xarm7_driver/`: driver package (`driver.py`, `errors.py`; later `telemetry.py`, `utils.py`). Limit config lives in driver.
-- `scripts/`: `phase0_smoke_test.py`, `phase1_prepare.py`; later `phase4_velocity_pulse.py`.
+- `scripts/`: `phase0_smoke_test.py`, `phase1_prepare.py`, `phase4_velocity_pulse.py`, `log_pose_to_csv.py` (Phase 6; uses writer thread so sampling loop never blocks on I/O; CSV uses timestamp from pose for accurate pose–time alignment), `run_phases.py` (repeatable run: phase0 → phase1 → phase4).
 - IP: `XARM_IP` env or config file; no hardcoded IP.
