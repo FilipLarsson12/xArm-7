@@ -21,7 +21,7 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 - **Phase 2** — Complete
 - **Phase 3** — Complete
 - **Phase 4** — Complete
-- Phase 5 — Not started
+- **Phase 5** — Complete
 - Phase 6 — Not started
 
 ## Phases
@@ -72,7 +72,7 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 - `XArmDriver.enter_cartesian_velocity_mode()`
 - `scripts/phase4_velocity_pulse.py`
 
-### Phase 5 — Safe velocity command pipeline
+### Phase 5 — Safe velocity command pipeline ✅ Complete
 **Done when:**
 - `send_twist()` clamps + uses duration watchdog
 - `stop()` zeros velocity immediately

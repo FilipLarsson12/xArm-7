@@ -8,6 +8,7 @@ from xarm.wrapper import XArmAPI
 
 from xarm7_driver.errors import XArmConnectionError, XArmCommandError, XArmLimitError
 from xarm7_driver.telemetry import LatestPoseStore, PoseStream
+from xarm7_driver.utils import clamp_twist
 
 
 @dataclass
@@ -24,13 +25,16 @@ class XArmConnectionConfig:
 @dataclass
 class LimitsConfig:
     """
-    Reduced-mode limits. Pass to apply_limits() or build from config/YAML.
+    Limit-related config: reduced-mode boundary/speeds (apply_limits) and velocity
+    clamp/watchdog (send_twist). Pass to apply_limits() and/or driver at init.
     Boundary order: [x_max, x_min, y_max, y_min, z_max, z_min] in mm.
     """
 
     tcp_boundary: list[float]  # 6 values: x_max, x_min, y_max, y_min, z_max, z_min (mm)
-    max_tcp_speed_mm_s: float = 100.0
-    max_joint_speed_rad_s: float | None = None  # optional; uses rad/s if is_radian else °/s
+    max_tcp_speed_mm_s: float = 100.0  # reduced mode + send_twist linear clamp
+    max_joint_speed_rad_s: float | None = None  # optional; reduced mode only
+    max_angular_speed_rad_s: float = 1.0  # send_twist angular clamp (rad/s)
+    velocity_duration_s: float = 0.15  # send_twist watchdog when duration=None
 
 
 class XArmDriver:
@@ -41,8 +45,13 @@ class XArmDriver:
     Later phases add: prepare(), limits, telemetry, mode switching, send_twist(), stop().
     """
 
-    def __init__(self, config: XArmConnectionConfig) -> None:
+    def __init__(
+        self,
+        config: XArmConnectionConfig,
+        limits: LimitsConfig | None = None,
+    ) -> None:
         self.config = config
+        self._limits = limits
         self._arm: XArmAPI | None = None
         self._pose_store = LatestPoseStore()
         self._telemetry_mode: Literal["off", "poll", "callback"] = "off"
@@ -153,23 +162,59 @@ class XArmDriver:
         wx: float,
         wy: float,
         wz: float,
-        duration: float = 0.2,
+        duration: float | None = None,
     ) -> int:
         """
         Send Cartesian velocity (mm/s for vx,vy,vz; rad/s for wx,wy,wz in base frame).
-        duration: max seconds this speed is applied; 0 = until next command. Returns SDK code.
+        Speeds are clamped using limits (max_tcp_speed_mm_s, max_angular_speed_rad_s) if set.
+        duration: max seconds this speed is applied; None = use limits.velocity_duration_s (watchdog);
+        0 = until next command. Returns SDK code.
         """
-        speeds = [vx, vy, vz, wx, wy, wz]
+        if self._limits is not None:
+            lim = self._limits
+            speeds = clamp_twist(
+                vx, vy, vz, wx, wy, wz,
+                lim.max_tcp_speed_mm_s,
+                lim.max_angular_speed_rad_s,
+            )
+            d = duration if duration is not None else lim.velocity_duration_s
+        else:
+            speeds = [vx, vy, vz, wx, wy, wz]
+            d = duration if duration is not None else 0.15
         return self.arm.vc_set_cartesian_velocity(
             speeds,
             is_radian=self.config.is_radian,
             is_tool_coord=False,
-            duration=duration,
+            duration=d,
         )
 
     def stop(self) -> int:
-        """Send zero velocity. Returns SDK code."""
-        return self.send_twist(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, duration=0)
+        """Send zero velocity immediately. Returns SDK code."""
+        return self.arm.vc_set_cartesian_velocity(
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            is_radian=self.config.is_radian,
+            is_tool_coord=False,
+            duration=0,
+        )
+
+    def check_fault(self) -> tuple[bool, int, int]:
+        """
+        Read error/warn codes. If error != 0, calls stop() and returns (False, err, warn).
+        Otherwise returns (True, err, warn). Call in your control loop to react to controller faults.
+        """
+        code, (err, warn) = self.arm.get_err_warn_code()
+        if code != 0:
+            return (False, err, warn)
+        if err != 0:
+            self.stop()
+            return (False, err, warn)
+        return (True, err, warn)
+
+    def shutdown(self) -> None:
+        """Stop telemetry, send zero velocity, disconnect. Safe to call anytime."""
+        self.stop_telemetry()
+        self.stop()
+        self.disconnect()
 
     def set_telemetry(
         self,

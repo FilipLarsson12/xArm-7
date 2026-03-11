@@ -16,6 +16,7 @@ This repo is a **driver layer** for xArm7 in Cartesian velocity mode (mode 5). C
 
 - Scripts in `scripts/` are **thin**: parse args, call driver, no business logic.
 - Safety first: support stop(), watchdog, error/state handling.
+- **Fault monitoring**: Any sustained velocity control loop (e.g. `while running: send_twist(...)`) must call `driver.check_fault()` each iteration and stop sending commands when it returns `(False, err, warn)`. The driver does not run a background fault monitor—the app is responsible for calling `check_fault()` in its loop.
 - Config-driven: IP, limits, telemetry mode from env or YAML (see `config/config.example.yaml`).
 - When adding a phase: implement deliverables, then mark the phase complete in PLAN.md (Progress + heading).
 

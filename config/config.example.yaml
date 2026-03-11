@@ -2,10 +2,13 @@
 
 xarm_ip: "192.168.1.185"
 
+# LimitsConfig: reduced mode (apply_limits) + send_twist clamp/watchdog
 limits:
   tcp_boundary: [500.0, -500.0, 500.0, -500.0, 500.0, -500.0]
   max_tcp_speed_mm_s: 100.0
-  # max_joint_speed_rad_s: 1.0   # optional
+  # max_joint_speed_rad_s: 1.0   # optional; reduced mode only
+  max_angular_speed_rad_s: 1.0   # send_twist angular clamp (rad/s)
+  velocity_duration_s: 0.15      # send_twist watchdog when duration=None
 
 # Pose streaming: off | poll | callback (callback needs enable_report at connect)
 telemetry:

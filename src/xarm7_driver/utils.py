@@ -1,7 +1,36 @@
 """
-Pure helpers: rate loop, timing. No SDK or I/O.
+Pure helpers: rate loop, timing, clamp. No SDK or I/O.
 """
 import time
+
+
+def clamp(value: float, low: float, high: float) -> float:
+    """Clamp value to [low, high]."""
+    return max(low, min(high, value))
+
+
+def clamp_twist(
+    vx: float,
+    vy: float,
+    vz: float,
+    wx: float,
+    wy: float,
+    wz: float,
+    max_linear_mm_s: float,
+    max_angular_rad_s: float,
+) -> list[float]:
+    """
+    Clamp linear components to ±max_linear_mm_s and angular to ±max_angular_rad_s.
+    Returns [vx, vy, vz, wx, wy, wz].
+    """
+    return [
+        clamp(vx, -max_linear_mm_s, max_linear_mm_s),
+        clamp(vy, -max_linear_mm_s, max_linear_mm_s),
+        clamp(vz, -max_linear_mm_s, max_linear_mm_s),
+        clamp(wx, -max_angular_rad_s, max_angular_rad_s),
+        clamp(wy, -max_angular_rad_s, max_angular_rad_s),
+        clamp(wz, -max_angular_rad_s, max_angular_rad_s),
+    ]
 
 
 class RateLoop:

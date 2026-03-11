@@ -43,8 +43,8 @@ def main() -> None:
     except (XArmConnectionError, XArmCommandError) as e:
         raise SystemExit(f"Failed: {e}") from e
     finally:
-        driver.disconnect()
-    print("Disconnected.")
+        driver.shutdown()
+    print("Done.")
 
 
 if __name__ == "__main__":
