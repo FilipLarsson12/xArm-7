@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from xarm.wrapper import XArmAPI
 
 from xarm7_driver.errors import XArmConnectionError, XArmLimitError
+from xarm7_driver.telemetry import LatestPoseStore, PoseStream
 
 
 @dataclass
@@ -16,6 +18,7 @@ class XArmConnectionConfig:
     is_radian: bool = True
     do_not_open: bool = False
     timeout: float | None = None  # command response timeout (seconds), optional
+    enable_report: bool = False  # True required for telemetry mode "callback"
 
 
 @dataclass
@@ -41,6 +44,11 @@ class XArmDriver:
     def __init__(self, config: XArmConnectionConfig) -> None:
         self.config = config
         self._arm: XArmAPI | None = None
+        self._pose_store = LatestPoseStore()
+        self._telemetry_mode: Literal["off", "poll", "callback"] = "off"
+        self._poll_hz: float = 50.0
+        self._pose_stream: PoseStream | None = None
+        self._report_callback_ref: Any = None  # for release_report_location_callback
 
     @property
     def arm(self) -> XArmAPI:
@@ -55,6 +63,7 @@ class XArmDriver:
             self.config.ip,
             is_radian=self.config.is_radian,
             do_not_open=self.config.do_not_open,
+            enable_report=self.config.enable_report,
         )
         if self.config.do_not_open:
             self._arm.connect(self.config.ip)
@@ -62,7 +71,8 @@ class XArmDriver:
             self._arm.set_timeout(self.config.timeout)
 
     def disconnect(self) -> None:
-        """Close connection. Safe to call even if not connected."""
+        """Close connection. Stops telemetry first, then disconnects."""
+        self.stop_telemetry()
         if self._arm is not None:
             try:
                 self._arm.disconnect()
@@ -120,6 +130,71 @@ class XArmDriver:
         Returns (code, states) from the SDK; 0 means success.
         """
         return self.arm.get_reduced_states(is_radian=self.config.is_radian)
+
+    def set_telemetry(
+        self,
+        mode: Literal["off", "poll", "callback"],
+        poll_hz: float = 50.0,
+    ) -> None:
+        """
+        Set telemetry mode. Does not start streaming; call start_telemetry() after connect().
+        Use "callback" only if XArmConnectionConfig had enable_report=True.
+        """
+        self.stop_telemetry()
+        self._telemetry_mode = mode
+        self._poll_hz = poll_hz
+
+    def start_telemetry(self) -> None:
+        """
+        Start pose streaming (poll thread or SDK callback). No-op if mode is "off".
+        Call after connect(). For callback mode, enable_report must have been True at connect.
+        """
+        if self._telemetry_mode == "off":
+            return
+        if self._telemetry_mode == "poll":
+            get_position_fn = lambda: self.arm.get_position(is_radian=self.config.is_radian)
+            self._pose_stream = PoseStream(get_position_fn, self._poll_hz, self._pose_store)
+            self._pose_stream.start()
+        elif self._telemetry_mode == "callback":
+            if not self.config.enable_report:
+                raise XArmConnectionError(
+                    "telemetry mode 'callback' requires enable_report=True in connection config"
+                )
+            self._report_callback_ref = self._on_report
+            self.arm.register_report_location_callback(
+                self._report_callback_ref,
+                report_cartesian=True,
+                report_joints=False,
+            )
+
+    def stop_telemetry(self) -> None:
+        """Stop pose streaming. Safe to call anytime; called automatically on disconnect()."""
+        if self._pose_stream is not None:
+            self._pose_stream.stop()
+            self._pose_stream = None
+        if self._arm is not None and self._report_callback_ref is not None:
+            self._arm.release_report_location_callback(self._report_callback_ref)
+            self._report_callback_ref = None
+
+    def _on_report(self, data: dict) -> None:
+        """SDK report callback; updates pose store. Called from SDK thread."""
+        cartesian = data.get("cartesian") or []
+        if cartesian:
+            self._pose_store.update(cartesian, time.monotonic())
+
+    def get_pose(self) -> tuple[int, list[float]]:
+        """One-shot read: (code, pose). Pose is [x, y, z, roll, pitch, yaw]."""
+        return self.arm.get_position(is_radian=self.config.is_radian)
+
+    def latest_pose(self) -> tuple[list[float], float]:
+        """
+        Best available pose now: (pose, timestamp).
+        If streaming (poll/callback), returns cached; if off, one-shot read. Timestamp is monotonic.
+        """
+        if self._telemetry_mode == "off":
+            code, pose = self.get_pose()
+            return (list(pose) if code == 0 and pose else [], time.monotonic())
+        return self._pose_store.get()
 
     def read_basic_status(self) -> dict[str, Any]:
         """

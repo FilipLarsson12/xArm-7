@@ -6,3 +6,8 @@ limits:
   tcp_boundary: [500.0, -500.0, 500.0, -500.0, 500.0, -500.0]
   max_tcp_speed_mm_s: 100.0
   # max_joint_speed_rad_s: 1.0   # optional
+
+# Pose streaming: off | poll | callback (callback needs enable_report at connect)
+telemetry:
+  mode: "poll"
+  poll_hz: 50.0

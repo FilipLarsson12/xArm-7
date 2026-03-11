@@ -19,7 +19,7 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 - **Phase 0** — Complete
 - **Phase 1** — Complete
 - **Phase 2** — Complete
-- Phase 3 — Not started
+- **Phase 3** — Complete
 - Phase 4 — Not started
 - Phase 5 — Not started
 - Phase 6 — Not started
@@ -53,7 +53,7 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 **Deliverables:**
 - `XArmDriver.apply_limits()` (limit logic in driver only; no separate limits.py)
 
-### Phase 3 — Telemetry (pose streaming on/off)
+### Phase 3 — Telemetry (pose streaming on/off) ✅ Complete
 **Done when:**
 - telemetry=off: no background work
 - telemetry=poll: background polling provides latest pose
