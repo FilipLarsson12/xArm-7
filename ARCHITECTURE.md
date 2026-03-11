@@ -24,7 +24,7 @@
   - Responsibilities:
     - connect/disconnect
     - prepare (clear errors, motion_enable, set_state)
-    - apply limits (reduced mode, boundary)
+    - apply limits (reduced mode, boundary) — limit logic lives here; no separate limits module
     - enter cartesian velocity mode (mode 5)
     - `send_twist()` with clamping + duration watchdog
     - `stop()` and `shutdown()`
@@ -35,11 +35,6 @@
     - `telemetry=poll`: thread polling `get_position()`
     - `telemetry=callback`: uses SDK report callbacks (when enabled_report)
   - Provides `latest_pose()` and timestamps.
-- `limits.py`
-  - Helpers to configure/query:
-    - reduced mode settings (max tcp speed, max joint speed, joint ranges)
-    - safety boundary/fence settings (xyz min/max) if enabled in controller
-  - Contains validation (ordering of max/min, units, etc).
 - `errors.py`
   - Exception classes:
     - `XArmConnectionError`, `XArmCommandError`, `XArmSafetyError`

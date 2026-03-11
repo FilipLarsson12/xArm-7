@@ -1,4 +1,11 @@
-from .driver import XArmConnectionConfig, XArmDriver
-from .errors import XArmConnectionError, XArmDriverError
+from .driver import LimitsConfig, XArmConnectionConfig, XArmDriver
+from .errors import XArmConnectionError, XArmDriverError, XArmLimitError
 
-__all__ = ["XArmConnectionConfig", "XArmDriver", "XArmConnectionError", "XArmDriverError"]
+__all__ = [
+    "LimitsConfig",
+    "XArmConnectionConfig",
+    "XArmDriver",
+    "XArmConnectionError",
+    "XArmDriverError",
+    "XArmLimitError",
+]

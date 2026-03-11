@@ -7,3 +7,7 @@ class XArmDriverError(Exception):
 
 class XArmConnectionError(XArmDriverError):
     """Raised when connection or prepare step fails."""
+
+
+class XArmLimitError(XArmDriverError):
+    """Raised when applying or querying limits fails."""

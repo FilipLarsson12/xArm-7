@@ -18,7 +18,7 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 ## Progress
 - **Phase 0** — Complete
 - **Phase 1** — Complete
-- Phase 2 — Not started
+- **Phase 2** — Complete
 - Phase 3 — Not started
 - Phase 4 — Not started
 - Phase 5 — Not started
@@ -44,15 +44,14 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 - `XArmDriver.connect()`, `prepare()`
 - `scripts/phase1_prepare.py`
 
-### Phase 2 — Limits / safety configuration
+### Phase 2 — Limits / safety configuration ✅ Complete
 **Done when:**
 - Reduced mode and bounds can be configured from config
 - (Optional) safety boundary/fence config supported
 - Driver can query current reduced states
 
 **Deliverables:**
-- `limits.py` helpers
-- `XArmDriver.apply_limits()`
+- `XArmDriver.apply_limits()` (limit logic in driver only; no separate limits.py)
 
 ### Phase 3 — Telemetry (pose streaming on/off)
 **Done when:**
