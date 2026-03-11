@@ -5,6 +5,8 @@ from typing import Any
 
 from xarm.wrapper import XArmAPI
 
+from xarm7_driver.errors import XArmConnectionError
+
 
 @dataclass
 class XArmConnectionConfig:
@@ -54,6 +56,26 @@ class XArmDriver:
                 self._arm.disconnect()
             finally:
                 self._arm = None
+
+    def prepare(self) -> None:
+        """
+        Clear errors/warnings if any, enable motion, set state to ready (0).
+        Call after connect() when you want the arm ready to accept commands.
+        Raises XArmConnectionError if any step fails.
+        """
+        arm = self.arm
+        code, (err, warn) = arm.get_err_warn_code()
+        if code != 0:
+            raise XArmConnectionError(f"get_err_warn_code failed: code={code}")
+        if err != 0 or warn != 0:
+            arm.clean_warn()
+            arm.clean_error()
+        code = arm.motion_enable(True)
+        if code != 0:
+            raise XArmConnectionError(f"motion_enable(True) failed: code={code}")
+        code = arm.set_state(0)
+        if code != 0:
+            raise XArmConnectionError(f"set_state(0) failed: code={code}")
 
     def read_basic_status(self) -> dict[str, Any]:
         """

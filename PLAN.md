@@ -17,7 +17,7 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 
 ## Progress
 - **Phase 0** — Complete
-- Phase 1 — Not started
+- **Phase 1** — Complete
 - Phase 2 — Not started
 - Phase 3 — Not started
 - Phase 4 — Not started
@@ -35,7 +35,7 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 - `pyproject.toml` dependencies
 - `scripts/phase0_smoke_test.py`
 
-### Phase 1 — Connect + prepare
+### Phase 1 — Connect + prepare ✅ Complete
 **Done when:**
 - Can clear errors/warnings (if any)
 - Can enable motion and set state to ready safely
