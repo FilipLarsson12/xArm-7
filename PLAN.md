@@ -15,9 +15,18 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 - `config/` example config (IP, limits, telemetry)
 - `notebooks/` optional interactive debug notebook
 
+## Progress
+- **Phase 0** — Complete
+- Phase 1 — Not started
+- Phase 2 — Not started
+- Phase 3 — Not started
+- Phase 4 — Not started
+- Phase 5 — Not started
+- Phase 6 — Not started
+
 ## Phases
 
-### Phase 0 — Environment + smoke test
+### Phase 0 — Environment + smoke test ✅ Complete
 **Done when:**
 - SDK installs and imports
 - Script can connect to robot and print: version/state/error codes/pose
