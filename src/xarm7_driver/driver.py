@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from xarm.wrapper import XArmAPI
 
-from xarm7_driver.errors import XArmConnectionError, XArmLimitError
+from xarm7_driver.errors import XArmConnectionError, XArmCommandError, XArmLimitError
 from xarm7_driver.telemetry import LatestPoseStore, PoseStream
 
 
@@ -130,6 +130,46 @@ class XArmDriver:
         Returns (code, states) from the SDK; 0 means success.
         """
         return self.arm.get_reduced_states(is_radian=self.config.is_radian)
+
+    def enter_cartesian_velocity_mode(self) -> None:
+        """
+        Set controller to Cartesian velocity mode (5) and state to ready (0).
+        Call after connect() and prepare() when you want to send twist commands.
+        Raises XArmCommandError if mode or state change fails.
+        """
+        arm = self.arm
+        code = arm.set_mode(5)
+        if code != 0:
+            raise XArmCommandError(f"set_mode(5) failed: code={code}")
+        code = arm.set_state(0)
+        if code != 0:
+            raise XArmCommandError(f"set_state(0) failed: code={code}")
+
+    def send_twist(
+        self,
+        vx: float,
+        vy: float,
+        vz: float,
+        wx: float,
+        wy: float,
+        wz: float,
+        duration: float = 0.2,
+    ) -> int:
+        """
+        Send Cartesian velocity (mm/s for vx,vy,vz; rad/s for wx,wy,wz in base frame).
+        duration: max seconds this speed is applied; 0 = until next command. Returns SDK code.
+        """
+        speeds = [vx, vy, vz, wx, wy, wz]
+        return self.arm.vc_set_cartesian_velocity(
+            speeds,
+            is_radian=self.config.is_radian,
+            is_tool_coord=False,
+            duration=duration,
+        )
+
+    def stop(self) -> int:
+        """Send zero velocity. Returns SDK code."""
+        return self.send_twist(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, duration=0)
 
     def set_telemetry(
         self,

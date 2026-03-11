@@ -20,7 +20,7 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 - **Phase 1** — Complete
 - **Phase 2** — Complete
 - **Phase 3** — Complete
-- Phase 4 — Not started
+- **Phase 4** — Complete
 - Phase 5 — Not started
 - Phase 6 — Not started
 
@@ -63,7 +63,7 @@ Build a small, safe Python driver layer for xArm7 Cartesian velocity control (mo
 - `telemetry.py` PoseStream
 - `XArmDriver.get_pose()` / `latest_pose()`
 
-### Phase 4 — Enter Cartesian velocity mode (mode 5)
+### Phase 4 — Enter Cartesian velocity mode (mode 5) ✅ Complete
 **Done when:**
 - Driver switches mode/state reliably
 - A tiny velocity pulse works and stops cleanly
